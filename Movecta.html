@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movecta - Gestão de IT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <nav class="bg-slate-800 text-white p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-widest">MOVECTA <span class="font-light text-blue-400 italic text-sm">PORT OPERATIONS</span></h1>
+            <div id="statusConexao" class="text-xs bg-green-500 px-2 py-1 rounded">Online</div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <p class="text-gray-500 text-sm uppercase">Total de ITs</p>
+                <h2 id="totalITs" class="text-3xl font-bold text-gray-800">0</h2>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                <p class="text-gray-500 text-sm uppercase">Vigentes</p>
+                <h2 id="vigentes" class="text-3xl font-bold text-gray-800">0</h2>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500">
+                <p class="text-gray-500 text-sm uppercase">Vencidas</p>
+                <h2 id="vencidas" class="text-3xl font-bold text-gray-800">0</h2>
+            </div>
+        </div>
+
+        <section id="formSection" class="bg-white p-6 rounded-xl shadow-md mb-8 hidden transition-all">
+            <h3 class="text-lg font-semibold mb-4 border-b pb-2">Cadastrar Nova Instrução de Trabalho</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" id="nomeIT" placeholder="Nome da Instrução" class="border p-2 rounded">
+                <input type="text" id="setorIT" placeholder="Setor (Ex: Operacional)" class="border p-2 rounded">
+                <input type="date" id="vencimentoIT" class="border p-2 rounded">
+                <input type="file" id="arquivoIT" accept="application/pdf" class="border p-2 rounded">
+            </div>
+            <div class="mt-4 flex gap-2">
+                <button onclick="enviarDados()" id="btnSalvar" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">Salvar IT</button>
+                <button onclick="toggleForm()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded">Cancelar</button>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-4 border-b flex justify-between items-center bg-gray-100">
+                <h3 class="font-bold text-gray-700">Documentos Cadastrados</h3>
+                <button onclick="toggleForm()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+                    <i class="fas fa-plus mr-2"></i>Nova IT
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                        <tr>
+                            <th class="p-4">ID</th>
+                            <th class="p-4">Nome</th>
+                            <th class="p-4">Setor</th>
+                            <th class="p-4">Vencimento</th>
+                            <th class="p-4 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaCorpo" class="divide-y text-gray-700">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // COLOQUE A URL DO SEU APP SCRIPT AQUI
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6IMnJO-NbsBYY8imqD7yBzIWadQxRt00Jn1xHbN2Thpi7cH_TdHghzbCW_9I5IXJchg/exec";
+
+        // Alternar visualização do formulário
+        function toggleForm() {
+            document.getElementById('formSection').classList.toggle('hidden');
+        }
+
+        // Função para converter arquivo para Base64
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
+
+        // ENVIAR DADOS PARA O GOOGLE
+        async function enviarDados() {
+            const btn = document.getElementById('btnSalvar');
+            const fileInput = document.getElementById('arquivoIT');
+            
+            if (!fileInput.files[0]) return alert("Selecione um PDF!");
+
+            btn.disabled = true;
+            btn.innerText = "Enviando...";
+
+            try {
+                const base64 = await toBase64(fileInput.files[0]);
+                
+                const payload = {
+                    action: "createIT",
+                    nome: document.getElementById('nomeIT').value,
+                    setor: document.getElementById('setorIT').value,
+                    vencimento: document.getElementById('vencimentoIT').value,
+                    fileName: fileInput.files[0].name,
+                    fileBase64: base64
+                };
+
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                const res = await response.json();
+                if(res.status === "success") {
+                    alert("IT Salva com sucesso!");
+                    location.reload();
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao salvar dados.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Salvar IT";
+            }
+        }
+
+        // BUSCAR DADOS DO GOOGLE
+        async function carregarDados() {
+            const corpo = document.getElementById('tabelaCorpo');
+            corpo.innerHTML = '<tr><td colspan="5" class="p-4 text-center">Carregando dados...</td></tr>';
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "listITs" })
+                });
+                
+                const res = await response.json();
+                
+                if(res.status === "success") {
+                    renderizarTabela(res.data);
+                }
+            } catch (e) {
+                corpo.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-red-500">Erro ao carregar dados. Verifique a URL do Script.</td></tr>';
+            }
+        }
+
+        function renderizarTabela(dados) {
+            const corpo = document.getElementById('tabelaCorpo');
+            corpo.innerHTML = "";
+            
+            let vigentes = 0;
+            let vencidas = 0;
+            const hoje = new Date();
+
+            dados.forEach(it => {
+                const dataVenc = new Date(it.Vencimento);
+                const isVencido = dataVenc < hoje;
+                isVencido ? vencidas++ : vigentes++;
+
+                corpo.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-4 font-mono text-xs">${it.ID}</td>
+                        <td class="p-4 font-semibold">${it.Nome}</td>
+                        <td class="p-4">${it.Setor}</td>
+                        <td class="p-4">
+                            <span class="${isVencido ? 'text-red-500 font-bold' : 'text-green-600'}">
+                                ${new Date(it.Vencimento).toLocaleDateString('pt-BR')}
+                            </span>
+                        </td>
+                        <td class="p-4 text-center">
+                            <a href="${it.URL}" target="_blank" class="text-blue-600 hover:text-blue-800 mr-3"><i class="fas fa-eye"></i></a>
+                            <button class="text-gray-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('totalITs').innerText = dados.length;
+            document.getElementById('vigentes').innerText = vigentes;
+            document.getElementById('vencidas').innerText = vencidas;
+        }
+
+        // Iniciar
+        carregarDados();
+    </script>
+</body>
+</html># Movecta
