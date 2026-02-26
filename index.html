@@ -132,24 +132,29 @@
 
         // BUSCAR DADOS DO GOOGLE
         async function carregarDados() {
-            const corpo = document.getElementById('tabelaCorpo');
-            corpo.innerHTML = '<tr><td colspan="5" class="p-4 text-center">Carregando dados...</td></tr>';
+    const corpo = document.getElementById('tabelaCorpo');
+    corpo.innerHTML = '<tr><td colspan="5" class="p-4 text-center">Carregando dados...</td></tr>';
 
-            try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: "listITs" })
-                });
-                
-                const res = await response.json();
-                
-                if(res.status === "success") {
-                    renderizarTabela(res.data);
-                }
-            } catch (e) {
-                corpo.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-red-500">Erro ao carregar dados. Verifique a URL do Script.</td></tr>';
-            }
+    try {
+        const response = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors', // Tente remover esta linha se ela existir
+    body: JSON.stringify({ action: "listITs" }),
+    redirect: 'follow' // ESSA LINHA É OBRIGATÓRIA
+});
+        
+        const res = await response.json();
+        
+        if(res.status === "success") {
+            renderizarTabela(res.data);
+        } else {
+            throw new Error(res.message);
         }
+    } catch (e) {
+        console.error("Erro detalhado:", e);
+        corpo.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Erro: ${e.message}. Verifique a URL e a Implantação.</td></tr>`;
+    }
+}
 
         function renderizarTabela(dados) {
             const corpo = document.getElementById('tabelaCorpo');
@@ -193,4 +198,5 @@
 </body>
 
 </html>
+
 
