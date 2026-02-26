@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador IT - MOVECTA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 h-screen flex flex-col items-center justify-center text-white p-4">
+    
+    <div id="loading">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+        <p>Carregando Instrução...</p>
+    </div>
+
+    <iframe id="pdfFrame" class="w-full h-full hidden rounded-lg border-none"></iframe>
+
+    <script>
+        // Pega o link do PDF que o QR Code vai enviar
+        const urlParams = new URLSearchParams(window.location.search);
+        const pdfUrl = urlParams.get('file');
+
+        if (pdfUrl) {
+            const frame = document.getElementById('pdfFrame');
+            const loading = document.getElementById('loading');
+            
+            // Ajusta o link do Google Drive para modo de visualização direta (Preview)
+            let directUrl = pdfUrl.replace('/view?usp=drivesdk', '/preview').replace('/view', '/preview');
+            
+            frame.src = directUrl;
+            frame.classList.remove('hidden');
+            loading.classList.add('hidden');
+        } else {
+            document.getElementById('loading').innerHTML = "<p class='text-red-400'>Nenhuma instrução encontrada no QR Code.</p>";
+        }
+    </script>
+</body>
+</html>
